@@ -33,7 +33,8 @@ app.post("/webhook/lead", async (req, res) => {
     documentType: String(lead.documentType || "").trim(),
     pages: Number(lead.pages || 0),
     deadline: String(lead.deadline || "").trim(),
-    email: String(lead.email || "").trim().toLowerCase()
+    email: String(lead.email || "").trim().toLowerCase(),
+    phone: String(lead.phone || "").trim()
   };
 
   if (!normalizedLead.email || !normalizedLead.email.includes("@")) {
@@ -42,6 +43,10 @@ app.post("/webhook/lead", async (req, res) => {
 
   if (!Number.isFinite(normalizedLead.pages) || normalizedLead.pages <= 0) {
     return res.status(400).json({ ok: false, error: "Invalid pages value" });
+  }
+
+  if (!normalizedLead.phone) {
+    return res.status(400).json({ ok: false, error: "Invalid phone value" });
   }
 
   const leadEvent = {
@@ -73,10 +78,32 @@ app.post("/webhook/lead", async (req, res) => {
       headers.Authorization = crmAuthHeader;
     }
 
+    const novaPayload = {
+      phone: normalizedLead.phone,
+      "date-limite": normalizedLead.deadline,
+      typedeprojet: normalizedLead.documentType,
+      service: normalizedLead.documentType,
+      pages: normalizedLead.pages,
+      currency: "EUR",
+      Email: normalizedLead.email,
+      Site: "redaction-de-memoire.pro",
+      original_source: "(direct)",
+      original_medium: "(none)",
+      original_page_url: leadEvent.meta.sourcePage,
+      original_first_page_url: leadEvent.meta.sourcePage,
+      source_page: leadEvent.meta.sourcePage,
+      submitted_at: leadEvent.meta.submittedAt,
+      source_user_agent: leadEvent.meta.userAgent,
+      source_ip: leadEvent.sourceIp,
+      webhook_source: "redaction-de-memoire.pro",
+      webhook_source_type: "landing_form",
+      raw: leadEvent
+    };
+
     const crmResponse = await fetch(crmWebhookUrl, {
       method: "POST",
       headers,
-      body: JSON.stringify(leadEvent)
+      body: JSON.stringify(novaPayload)
     });
 
     if (!crmResponse.ok) {

@@ -507,6 +507,10 @@
           <label for="email">Votre adresse e-mail</label>
           <input id="email" name="email" type="email" placeholder="prenom@exemple.com" autocomplete="email" required />
         </div>
+        <div class="form-group">
+          <label for="phone">Votre téléphone</label>
+          <input id="phone" name="phone" type="tel" placeholder="+33 6 12 34 56 78" autocomplete="tel" required />
+        </div>
         <button class="btn-form" type="submit">Calculer mon tarif →</button>
         <p class="form-note" id="leadFormStatus" aria-live="polite">Vos données sont protégées · Aucun paiement requis</p>
       </form>
@@ -923,7 +927,8 @@
           documentType: formData.get('documentType'),
           pages: Number(formData.get('pages')),
           deadline: formData.get('deadline'),
-          email: formData.get('email')
+          email: formData.get('email'),
+          phone: formData.get('phone')
         },
         meta: {
           sourcePage: window.location.href,
