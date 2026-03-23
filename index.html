@@ -478,36 +478,38 @@
     <div class="form-card">
       <h3>Obtenez votre devis gratuit</h3>
       <p>Résultat instantané, sans engagement</p>
-      <div class="form-group">
-        <label>Type de document</label>
-        <select>
-          <option>Mémoire de Master</option>
-          <option>Thèse de Doctorat</option>
-          <option>Rapport de stage</option>
-          <option>Dissertation</option>
-        </select>
-      </div>
-      <div class="form-row">
+      <form id="leadForm" data-webhook-url="https://YOUR-WEBHOOK-DOMAIN/webhook/lead">
         <div class="form-group">
-          <label>Nombre de pages</label>
-          <input type="number" placeholder="Ex : 80" />
-        </div>
-        <div class="form-group">
-          <label>Délai souhaité</label>
-          <select>
-            <option>24 heures</option>
-            <option>48 heures</option>
-            <option>5 jours</option>
-            <option>10 jours</option>
+          <label for="documentType">Type de document</label>
+          <select id="documentType" name="documentType" required>
+            <option value="Mémoire de Master">Mémoire de Master</option>
+            <option value="Thèse de Doctorat">Thèse de Doctorat</option>
+            <option value="Rapport de stage">Rapport de stage</option>
+            <option value="Dissertation">Dissertation</option>
           </select>
         </div>
-      </div>
-      <div class="form-group">
-        <label>Votre adresse e-mail</label>
-        <input type="email" placeholder="prenom@exemple.com" />
-      </div>
-      <button class="btn-form">Calculer mon tarif →</button>
-      <p class="form-note">🔒 Vos données sont protégées · Aucun paiement requis</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="pages">Nombre de pages</label>
+            <input id="pages" name="pages" type="number" min="1" placeholder="Ex : 80" required />
+          </div>
+          <div class="form-group">
+            <label for="deadline">Délai souhaité</label>
+            <select id="deadline" name="deadline" required>
+              <option value="24 heures">24 heures</option>
+              <option value="48 heures">48 heures</option>
+              <option value="5 jours">5 jours</option>
+              <option value="10 jours">10 jours</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="email">Votre adresse e-mail</label>
+          <input id="email" name="email" type="email" placeholder="prenom@exemple.com" autocomplete="email" required />
+        </div>
+        <button class="btn-form" type="submit">Calculer mon tarif →</button>
+        <p class="form-note" id="leadFormStatus" aria-live="polite">Vos données sont protégées · Aucun paiement requis</p>
+      </form>
     </div>
   </div>
 </section>
@@ -891,6 +893,72 @@
     </div>
   </div>
 </footer>
+
+<script>
+  (() => {
+    const form = document.getElementById('leadForm');
+    if (!form) return;
+
+    const statusEl = document.getElementById('leadFormStatus');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const defaultStatus = statusEl ? statusEl.textContent : '';
+    const webhookUrl = (window.LEAD_WEBHOOK_URL || form.dataset.webhookUrl || '').trim();
+
+    if (!webhookUrl || webhookUrl.includes('YOUR-WEBHOOK-DOMAIN')) {
+      if (statusEl) {
+        statusEl.textContent = 'Webhook non configuré. Ajoutez votre URL dans data-webhook-url.';
+      }
+      if (submitBtn) submitBtn.disabled = true;
+      return;
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (submitBtn) submitBtn.disabled = true;
+      if (statusEl) statusEl.textContent = 'Envoi en cours...';
+
+      const formData = new FormData(form);
+      const payload = {
+        lead: {
+          documentType: formData.get('documentType'),
+          pages: Number(formData.get('pages')),
+          deadline: formData.get('deadline'),
+          email: formData.get('email')
+        },
+        meta: {
+          sourcePage: window.location.href,
+          submittedAt: new Date().toISOString(),
+          userAgent: navigator.userAgent
+        }
+      };
+
+      try {
+        const response = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          throw new Error(`Webhook error: ${response.status}`);
+        }
+
+        form.reset();
+        if (statusEl) statusEl.textContent = 'Merci ! Votre demande a ete envoyee.';
+      } catch (error) {
+        console.error(error);
+        if (statusEl) statusEl.textContent = 'Erreur d envoi. Reessayez dans quelques instants.';
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+        setTimeout(() => {
+          if (statusEl) statusEl.textContent = defaultStatus;
+        }, 5000);
+      }
+    });
+  })();
+</script>
 
 </body>
 </html>
