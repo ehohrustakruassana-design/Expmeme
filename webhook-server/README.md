@@ -4,6 +4,7 @@ Simple endpoint for your landing form:
 - receives lead data from site form
 - validates basic fields
 - optionally forwards lead to your CRM webhook
+- optionally forwards lead to your Google Sheets webhook
 
 ## Endpoints
 
@@ -39,6 +40,7 @@ Simple endpoint for your landing form:
    - `ALLOWED_ORIGIN=https://redaction-de-memoire.pro`
    - `CRM_WEBHOOK_URL=` your CRM incoming webhook URL
    - `CRM_WEBHOOK_AUTH_HEADER=` optional `Bearer ...`
+   - `GOOGLE_SHEETS_WEBHOOK_URL=` your Google Apps Script `.../exec` URL
 4. Run server:
    - `npm start`
 
@@ -55,4 +57,5 @@ Replace `https://YOUR-WEBHOOK-DOMAIN` with your deployed domain.
 ## CRM Integration
 
 When `CRM_WEBHOOK_URL` is set, this server forwards normalized lead events to CRM as JSON.
-If not set, server still accepts and logs leads (`LEAD_RECEIVED`) so you can test safely first.
+When `GOOGLE_SHEETS_WEBHOOK_URL` is set, it also forwards the same payload to Google Apps Script.
+If neither is set, server still accepts and logs leads (`LEAD_RECEIVED`) so you can test safely first.
